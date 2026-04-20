@@ -233,6 +233,8 @@ body{
 <div id="toast"></div>
 
 <script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging.js"></script>
 // =============================================
 // ✅ REAL AZURE FUNCTION URLs — CONNECTED!
 // =============================================
@@ -378,7 +380,7 @@ async function addMed() {
   const data = {
     name: document.getElementById('f-name').value,
     time: document.getElementById('f-time').value,
-    category: document.getElementById('f-cat').value,
+    cat: document.getElementById('f-cat').value,
     dose: document.getElementById('f-dose').value,
     food: document.getElementById('f-food').value,
     notes: document.getElementById('f-notes').value
