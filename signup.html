@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MedPulse Sign Up</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  overflow:hidden;
+
+  background: linear-gradient(-45deg,#0f172a,#1e293b,#020617,#0ea5e9);
+  background-size:400% 400%;
+  animation:gradient 12s ease infinite;
+}
+
+@keyframes gradient{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* Glow */
+.glow{
+  position:absolute;
+  width:300px;
+  height:300px;
+  background: radial-gradient(circle,#7c3aed,transparent);
+  filter:blur(120px);
+  animation: float 6s infinite alternate;
+}
+
+.glow:nth-child(1){top:10%; left:10%;}
+.glow:nth-child(2){bottom:10%; right:10%; animation-delay:2s;}
+
+@keyframes float{
+  from{transform:translateY(0)}
+  to{transform:translateY(50px)}
+}
+
+/* Card */
+.container{
+  position:relative;
+  z-index:2;
+  width:340px;
+  padding:40px;
+  border-radius:20px;
+
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,0.1);
+
+  box-shadow:0 0 40px rgba(124,58,237,0.4);
+  text-align:center;
+  color:white;
+
+  animation:fadeIn 1.5s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(30px)}
+  to{opacity:1; transform:translateY(0)}
+}
+
+h2{
+  margin-bottom:20px;
+  font-weight:600;
+}
+
+/* Inputs */
+input{
+  width:100%;
+  padding:12px;
+  margin:12px 0;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  background:rgba(255,255,255,0.1);
+  color:white;
+  transition:0.3s;
+}
+
+input:focus{
+  box-shadow:0 0 10px #06b6d4;
+}
+
+/* Button */
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(135deg,#7c3aed,#06b6d4);
+  color:white;
+  cursor:pointer;
+  font-weight:600;
+  transition:0.3s;
+}
+
+button:hover{
+  transform:scale(1.05);
+  box-shadow:0 0 20px #06b6d4;
+}
+
+/* Link */
+a{
+  display:block;
+  margin-top:15px;
+  color:#38bdf8;
+  text-decoration:none;
+}
+
+/* Floating icons */
+.icon{
+  position:absolute;
+  font-size:24px;
+  color:#38bdf8;
+  animation: floatIcon 8s linear infinite;
+}
+
+@keyframes floatIcon{
+  0%{transform:translateY(100vh); opacity:0}
+  50%{opacity:1}
+  100%{transform:translateY(-10vh); opacity:0}
+}
+</style>
+</head>
+
+<body>
+
+<div class="glow"></div>
+<div class="glow"></div>
+
+<div class="icon" style="left:25%; animation-delay:1s;">💊</div>
+<div class="icon" style="left:60%; animation-delay:3s;">❤️</div>
+<div class="icon" style="left:80%; animation-delay:5s;">🩺</div>
+
+<div class="container">
+  <h2>Create Account</h2>
+
+  <input type="text" id="newUser" placeholder="Username">
+  <input type="password" id="newPass" placeholder="Password">
+
+  <button onclick="signup()">Sign Up</button>
+
+  <a href="index.html">Back to Login</a>
+</div>
+<script>
+function signup(){
+  let user = document.getElementById("newUser").value;
+  let pass = document.getElementById("newPass").value;
+
+  if(!user || !pass){
+    alert("Enter username & password");
+    return;
+  }
+
+  localStorage.setItem("user", user);
+  localStorage.setItem("pass", pass);
+
+  alert("Signup successful!");
+  window.location.href = "index.html";
+}
+</script>
+</body>
+</html>

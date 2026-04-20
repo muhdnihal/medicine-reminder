@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MedPulse — Smart Medicine Reminder</title>
+<script>
+if (localStorage.getItem("loggedIn") !== "true") {
+    window.location.href = "index.html";
+}
+</script>
+</head>
+<body>
+
+<div style="position:fixed;top:20px;right:20px;z-index:999;">
+    <button onclick="logout()" style="padding:10px 15px;border:none;background:#7c3aed;color:white;border-radius:8px;cursor:pointer;">
+        Logout
+    </button>
+</div>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f1e;--bg2:#111627;--bg3:#161d32;--bg4:#1c2540;
+  --violet:#a78bfa;--violet-dim:#7c3aed;--violet-bg:rgba(167,139,250,.1);--violet-glow:rgba(167,139,250,.25);
+  --cyan:#22d3ee;--cyan-bg:rgba(34,211,238,.08);--cyan-glow:rgba(34,211,238,.2);
+  --rose:#fb7185;--rose-bg:rgba(251,113,133,.08);
+  --amber:#fbbf24;--amber-bg:rgba(251,191,36,.08);
+  --emerald:#34d399;--emerald-bg:rgba(52,211,153,.08);--emerald-glow:rgba(52,211,153,.2);
+  --text:#e2e8f8;--text2:#8892b0;--text3:#4a5580;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+  --r:14px;--rsm:9px;--rpill:999px;
+}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Outfit',sans-serif;font-size:14px;
+  min-height:100vh;padding:28px 16px 80px;
+  display:flex;justify-content:center;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 20% -10%,rgba(124,58,237,.18) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 10%,rgba(34,211,238,.1) 0%,transparent 50%);
+}
+.wrap{width:100%;max-width:500px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:13px}
+.brand-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#a78bfa);display:flex;align-items:center;justify-content:center;box-shadow:0 0 24px rgba(167,139,250,.4),0 4px 12px rgba(0,0,0,.3);position:relative;overflow:hidden;}
+.brand-icon::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.2),transparent)}
+.brand-icon svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;position:relative;z-index:1}
+.brand-name{font-size:20px;font-weight:700;letter-spacing:-.5px}
+.brand-sub{font-size:12px;color:var(--text2);margin-top:1px}
+.live-badge{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--cyan);background:var(--cyan-bg);border:1px solid rgba(34,211,238,.25);padding:6px 14px;border-radius:var(--rpill);box-shadow:0 0 12px var(--cyan-glow);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--c,#a78bfa),transparent);opacity:.8;}
+.stat:nth-child(1){--c:#a78bfa}.stat:nth-child(2){--c:#22d3ee}.stat:nth-child(3){--c:#34d399}
+.stat:hover{transform:translateY(-2px);border-color:var(--border2)}
+.stat-num{font-size:30px;font-weight:700;line-height:1;font-family:'JetBrains Mono',monospace}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:5px;text-transform:uppercase;letter-spacing:.07em;font-weight:500}
+.adh-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin-bottom:12px;position:relative;overflow:hidden;}
+.adh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.adh-label{font-size:13px;font-weight:500;color:var(--text2)}
+.adh-score{font-size:22px;font-weight:700;color:var(--violet);font-family:'JetBrains Mono',monospace;}
+.adh-track{height:7px;background:var(--bg4);border-radius:var(--rpill);overflow:hidden}
+.adh-fill{height:100%;border-radius:var(--rpill);background:linear-gradient(90deg,#7c3aed,#a78bfa,#c4b5fd);transition:width .8s cubic-bezier(.4,0,.2,1);}
+.adh-caption{font-size:12px;color:var(--text3);margin-top:9px}
+.next-card{display:flex;align-items:center;gap:12px;background:var(--violet-bg);border:1px solid rgba(167,139,250,.2);border-radius:var(--r);padding:14px 17px;margin-bottom:22px;}
+.next-card svg{width:18px;height:18px;stroke:var(--violet);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;}
+.next-label{font-size:11px;font-weight:600;color:var(--violet);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px}
+.next-value{font-size:13px;color:var(--text)}
+.form-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:22px;position:relative;overflow:hidden;}
+.form-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(167,139,250,.5),rgba(34,211,238,.3),transparent);}
+.form-title{display:flex;align-items:center;gap:9px;margin-bottom:20px}
+.form-title-icon{width:30px;height:30px;border-radius:8px;background:var(--violet-bg);border:1px solid rgba(167,139,250,.2);display:flex;align-items:center;justify-content:center;}
+.form-title-icon svg{width:14px;height:14px;stroke:var(--violet);fill:none;stroke-width:2;stroke-linecap:round}
+.form-title span{font-size:15px;font-weight:600}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-size:13px;font-family:'Outfit',sans-serif;padding:10px 13px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;appearance:none;-webkit-appearance:none;}
+.field input::placeholder{color:var(--text3)}
+.field input:focus,.field select:focus{border-color:rgba(167,139,250,.5);background:var(--bg4);box-shadow:0 0 0 3px rgba(167,139,250,.08);}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5580' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pill-group{display:flex;gap:6px;flex-wrap:wrap}
+.fpill{padding:6px 15px;border-radius:var(--rpill);font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:var(--bg3);transition:all .2s;}
+.fpill:hover{border-color:rgba(167,139,250,.4);color:var(--violet);background:var(--violet-bg)}
+.fpill.sel{background:var(--violet-bg);color:var(--violet);border-color:rgba(167,139,250,.4);}
+.pri-group{display:flex;gap:7px}
+.ppill{flex:1;text-align:center;padding:8px;border-radius:var(--rsm);font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--text2);cursor:pointer;background:var(--bg3);transition:all .2s;}
+.ppill.sel-low{background:rgba(52,211,153,.1);color:var(--emerald);border-color:rgba(52,211,153,.3);}
+.ppill.sel-medium{background:rgba(251,191,36,.08);color:var(--amber);border-color:rgba(251,191,36,.3);}
+.ppill.sel-high{background:rgba(251,113,133,.1);color:var(--rose);border-color:rgba(251,113,133,.3);}
+.submit-btn{width:100%;padding:13px;margin-top:6px;background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;border:none;border-radius:var(--rsm);font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;box-shadow:0 4px 20px rgba(124,58,237,.4);position:relative;overflow:hidden;}
+.submit-btn:hover{transform:translateY(-1px)}
+.submit-btn:active{transform:scale(.98)}
+.submit-btn svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;}
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.list-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em}
+.filter-tabs{display:flex;gap:5px}
+.ftab{font-size:11px;font-weight:500;padding:5px 12px;border-radius:var(--rpill);border:1px solid var(--border);color:var(--text3);cursor:pointer;background:var(--bg2);transition:all .15s;}
+.ftab.active{background:var(--bg3);color:var(--text);border-color:var(--border2)}
+.med-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:15px 17px;margin-bottom:9px;display:flex;align-items:flex-start;gap:13px;transition:all .2s;animation:fadeUp .3s ease both;position:relative;overflow:hidden;}
+.med-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent,#a78bfa);border-radius:0 2px 2px 0;opacity:.8;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.med-card:hover{border-color:var(--border2);background:var(--bg3);transform:translateX(2px)}
+.med-card.taken{opacity:.4}
+.med-icon-wrap{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.med-icon-wrap svg{width:19px;height:19px;fill:none;stroke-width:2;stroke-linecap:round}
+.med-body{flex:1;min-width:0}
+.med-name{font-size:14px;font-weight:600}
+.med-meta{font-size:11px;color:var(--text2);margin-top:3px;font-family:'JetBrains Mono',monospace}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}
+.tag{font-size:11px;font-weight:500;padding:3px 10px;border-radius:var(--rpill);border:1px solid}
+.prog-row{display:flex;align-items:center;gap:8px;margin-top:9px}
+.prog-track{flex:1;height:3px;border-radius:2px;background:var(--bg4)}
+.prog-bar{height:100%;border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-lbl{font-size:11px;color:var(--text3);white-space:nowrap}
+.med-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.status-tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:var(--rpill);white-space:nowrap;border:1px solid}
+.icon-btn{background:none;border:none;cursor:pointer;padding:6px;border-radius:7px;color:var(--text3);display:flex;transition:all .15s}
+.icon-btn.del:hover{color:var(--rose);background:var(--rose-bg);}
+.icon-btn.chk:hover{color:var(--emerald);background:var(--emerald-bg);}
+.icon-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.empty{text-align:center;padding:48px 20px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);}
+.empty-icon{width:56px;height:56px;border-radius:16px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+.empty-icon svg{width:26px;height:26px;stroke:var(--text3);fill:none;stroke-width:1.5}
+.empty-title{font-size:15px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.empty-sub{font-size:13px;color:var(--text3)}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 22px;border-radius:var(--rsm);font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:nowrap;z-index:999;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+
+<div class="wrap">
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M10.5 6.5L17.5 13.5M3.5 12.5l8-8a4.243 4.243 0 016 6l-8 8a4.243 4.243 0 01-6-6z"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">MedPulse</div>
+        <div class="brand-sub">Smart health companion</div>
+      </div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Active</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">Total</div></div>
+    <div class="stat"><div class="stat-num" id="s-today">0</div><div class="stat-lbl">Today</div></div>
+    <div class="stat"><div class="stat-num" id="s-taken">0</div><div class="stat-lbl">Taken</div></div>
+  </div>
+
+  <div class="adh-card">
+    <div class="adh-top">
+      <div class="adh-label">Adherence score</div>
+      <div class="adh-score" id="adh-pct">0%</div>
+    </div>
+    <div class="adh-track"><div class="adh-fill" id="adh-fill" style="width:0%"></div></div>
+    <div class="adh-caption" id="adh-msg">Add medications to begin tracking your daily adherence.</div>
+  </div>
+
+  <div class="next-card" id="next-card" style="display:none">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+    <div>
+      <div class="next-label">Next scheduled dose</div>
+      <div class="next-value" id="next-val"></div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-title">
+      <div class="form-title-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+      <span>Schedule medication</span>
+    </div>
+    <div class="field"><label>Medicine name</label><input id="f-name" type="text" placeholder="e.g. Metformin 500mg"/></div>
+    <div class="row2">
+      <div class="field"><label>Date &amp; time</label><input id="f-time" type="datetime-local"/></div>
+      <div class="field"><label>Category</label>
+        <select id="f-cat">
+          <option value="tablet">Tablet</option><option value="capsule">Capsule</option>
+          <option value="syrup">Syrup</option><option value="injection">Injection</option>
+          <option value="drops">Drops</option><option value="inhaler">Inhaler</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Dosage</label><input id="f-dose" placeholder="e.g. 1 tablet"/></div>
+      <div class="field"><label>With food?</label>
+        <select id="f-food">
+          <option value="Before food">Before food</option><option value="After food">After food</option>
+          <option value="With food">With food</option><option value="Anytime">Anytime</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Frequency</label>
+      <div class="pill-group" id="freq-row">
+        <div class="fpill sel" data-v="once">Once</div>
+        <div class="fpill" data-v="daily">Daily</div>
+        <div class="fpill" data-v="twice">Twice daily</div>
+        <div class="fpill" data-v="weekly">Weekly</div>
+        <div class="fpill" data-v="sos">SOS</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Priority</label>
+      <div class="pri-group" id="pri-row">
+        <div class="ppill sel-low" data-p="low">Low</div>
+        <div class="ppill" data-p="medium">Medium</div>
+        <div class="ppill" data-p="high">High</div>
+      </div>
+    </div>
+    <div class="field"><label>Notes</label><input id="f-notes" placeholder="Additional instructions..."/></div>
+    <button class="submit-btn" onclick="addMed()">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add to schedule
+    </button>
+  </div>
+
+  <div class="list-header">
+    <div class="list-title">Schedule</div>
+    <div class="filter-tabs">
+      <div class="ftab active" onclick="setFilter(this,'all')">All</div>
+      <div class="ftab" onclick="setFilter(this,'tablet')">Tablet</div>
+      <div class="ftab" onclick="setFilter(this,'capsule')">Capsule</div>
+      <div class="ftab" onclick="setFilter(this,'syrup')">Syrup</div>
+    </div>
+  </div>
+  <div id="list"></div>
+</div>
+<div id="toast"></div>
+
+<script>
+// =============================================
+// ✅ REAL AZURE FUNCTION URLs — CONNECTED!
+// =============================================
+const ADD_URL    = 'https://reminder-d8akgrbqg8fegwbk.canadacentral-01.azurewebsites.net/api/addReminder';
+const GET_URL    = 'https://reminder-d8akgrbqg8fegwbk.canadacentral-01.azurewebsites.net/api/getReminders';
+const DELETE_URL = 'https://reminder-d8akgrbqg8fegwbk.canadacentral-01.azurewebsites.net/api/deleteReminder';
+
+const DB_KEY = 'medpulse_v4';
+let meds = [], freq = 'once', priority = 'low', filterCat = 'all';
+
+function dbLoad(){try{const s=localStorage.getItem(DB_KEY);if(s)meds=JSON.parse(s);}catch(e){meds=[];}}
+function dbSave(){try{localStorage.setItem(DB_KEY,JSON.stringify(meds));}catch(e){}}
+
+async function apiPost(d){
+    try{
+        const res = await fetch(ADD_URL,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(d)
+        });
+
+        const text = await res.text();
+        console.log('Response:', text);
+
+        if(!res.ok){
+            console.error("Server error:", res.status);
+            alert("Failed to save in DB");
+        } else {
+            console.log("Saved successfully!");
+        }
+
+    }catch(e){
+        console.error('Add failed:',e);
+        alert("Error connecting to server");
+    }
+}
+
+async function apiDelete(id){
+    try{
+        await fetch(DELETE_URL+'?id='+id,{method:'DELETE'});
+        console.log('Deleted from DB:', id);
+    }catch(e){console.error('Delete failed:',e);}
+}
+
+async function loadFromServer(){
+    try{
+        const res = await fetch(GET_URL);
+        const data = await res.json();
+        console.log('Loaded from DB:', data);
+        if(Array.isArray(data) && data.length > 0){
+            meds = data;
+            dbSave();
+            render();
+            updateStats();
+        }
+    }catch(e){console.error('Load failed:',e);}
+}
+
+const catCfg={
+  tablet:   {bg:'rgba(167,139,250,.12)',stroke:'#a78bfa',text:'#c4b5fd',accent:'#a78bfa',icon:'<path d="M10.5 6.5L17.5 13.5M3.5 12.5l8-8a4.243 4.243 0 016 6l-8 8a4.243 4.243 0 01-6-6z"/>'},
+  capsule:  {bg:'rgba(96,165,250,.12)', stroke:'#60a5fa',text:'#93c5fd',accent:'#60a5fa',icon:'<rect x="3" y="10" width="18" height="4" rx="2"/><line x1="3" y1="12" x2="21" y2="12"/>'},
+  syrup:    {bg:'rgba(52,211,153,.12)', stroke:'#34d399',text:'#6ee7b7',accent:'#34d399',icon:'<path d="M9 3h6l2 4H7L9 3zM7 7v14h10V7"/>'},
+  injection:{bg:'rgba(251,113,133,.12)',stroke:'#fb7185',text:'#fda4af',accent:'#fb7185',icon:'<path d="M18 2l4 4-12 12H6v-4L18 2z"/>'},
+  drops:    {bg:'rgba(34,211,238,.12)', stroke:'#22d3ee',text:'#67e8f9',accent:'#22d3ee',icon:'<path d="M12 2C6 9 4 13 4 16a8 8 0 0016 0c0-3-2-7-8-14z"/>'},
+  inhaler:  {bg:'rgba(251,191,36,.12)', stroke:'#fbbf24',text:'#fcd34d',accent:'#fbbf24',icon:'<rect x="8" y="2" width="8" height="14" rx="3"/><path d="M12 16v6M8 22h8"/>'}
+};
+const priCfg={
+  low:   {bg:'rgba(52,211,153,.1)', border:'rgba(52,211,153,.3)', text:'#34d399',label:'Low'},
+  medium:{bg:'rgba(251,191,36,.08)',border:'rgba(251,191,36,.3)', text:'#fbbf24',label:'Medium'},
+  high:  {bg:'rgba(251,113,133,.1)',border:'rgba(251,113,133,.3)',text:'#fb7185',label:'High'}
+};
+
+document.querySelectorAll('#freq-row .fpill').forEach(p=>p.addEventListener('click',()=>{
+  document.querySelectorAll('#freq-row .fpill').forEach(x=>x.classList.remove('sel'));
+  p.classList.add('sel');freq=p.dataset.v;
+}));
+document.querySelectorAll('#pri-row .ppill').forEach(p=>p.addEventListener('click',()=>{
+  document.querySelectorAll('#pri-row .ppill').forEach(x=>x.className='ppill');
+  p.classList.add('sel-'+p.dataset.p);priority=p.dataset.p;
+}));
+
+function setFilter(el,f){document.querySelectorAll('.ftab').forEach(x=>x.classList.remove('active'));el.classList.add('active');filterCat=f;render();}
+function fmt(dt){return dt?new Date(dt).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):''}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400);}
+
+function updateStats(){
+  const now=new Date(),today=now.toDateString();
+  document.getElementById('s-total').textContent=meds.length;
+  document.getElementById('s-today').textContent=meds.filter(r=>new Date(r.time).toDateString()===today).length;
+  const taken=meds.filter(r=>r.taken).length;
+  document.getElementById('s-taken').textContent=taken;
+  const pct=meds.length?Math.round((taken/meds.length)*100):0;
+  document.getElementById('adh-pct').textContent=pct+'%';
+  document.getElementById('adh-fill').style.width=pct+'%';
+  document.getElementById('adh-msg').textContent=
+    pct===0?'Add medications to begin tracking your daily adherence.':
+    pct<40?'Getting started — every dose counts.':
+    pct<70?'Good progress! Stay consistent.':
+    pct<90?'Great adherence! Keep it up.':'Outstanding! Perfect adherence score.';
+  const up=meds.filter(r=>!r.taken&&new Date(r.time)>now).sort((a,b)=>new Date(a.time)-new Date(b.time));
+  const nb=document.getElementById('next-card');
+  if(up.length){nb.style.display='flex';document.getElementById('next-val').textContent=up[0].name+' — '+fmt(up[0].time);}
+  else nb.style.display='none';
+}
+
+function render(){
+  const list=document.getElementById('list');
+  const filtered=filterCat==='all'?meds:meds.filter(r=>r.cat===filterCat);
+  if(!filtered.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-title">No medications scheduled</div><div class="empty-sub">Add a medicine above to get started</div></div>`;
+    return;
+  }
+  list.innerHTML=filtered.map(r=>{
+    const idx=meds.indexOf(r);
+    const c=catCfg[r.cat]||catCfg.tablet;
+    const ps=priCfg[r.priority]||priCfg.low;
+    return `<div class="med-card${r.taken?' taken':''}" style="--accent:${c.accent}">
+      <div class="med-icon-wrap" style="background:${c.bg}"><svg viewBox="0 0 24 24" style="stroke:${c.stroke}">${c.icon}</svg></div>
+      <div class="med-body">
+        <div class="med-name">${r.name}</div>
+        <div class="med-meta">${fmt(r.time)} · ${r.dosage||'—'} · ${r.food}</div>
+        <div class="tags">
+          <span class="tag" style="background:${c.bg};color:${c.text};border-color:${c.stroke}40">${r.cat}</span>
+          <span class="tag" style="background:rgba(255,255,255,.04);color:var(--text2);border-color:var(--border)">${r.freq}</span>
+          <span class="tag" style="background:${ps.bg};color:${ps.text};border-color:${ps.border}">${ps.label}</span>
+          ${r.notes?`<span class="tag" style="background:rgba(255,255,255,.03);color:var(--text3);border-color:var(--border)">${r.notes}</span>`:''}
+        </div>
+        <div class="prog-row">
+          <div class="prog-track"><div class="prog-bar" style="width:${r.taken?100:0}%;background:${r.taken?'#34d399':c.stroke};"></div></div>
+          <div class="prog-lbl">${r.taken?'Taken':'Pending'}</div>
+        </div>
+      </div>
+      <div class="med-actions">
+        <span class="status-tag" style="background:${r.taken?'rgba(52,211,153,.1)':'rgba(167,139,250,.1)'};color:${r.taken?'#34d399':'#a78bfa'};border-color:${r.taken?'rgba(52,211,153,.3)':'rgba(167,139,250,.3)'}">${r.taken?'Taken':'Scheduled'}</span>
+        ${!r.taken?`<button class="icon-btn chk" onclick="markTaken(${idx})" title="Mark taken"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>`:''}
+        <button class="icon-btn del" onclick="delMed(${idx})" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function addMed(){
+  const name=document.getElementById('f-name').value.trim();
+  const time=document.getElementById('f-time').value;
+  if(!name){document.getElementById('f-name').focus();toast('Enter medicine name');return;}
+  if(!time){document.getElementById('f-time').focus();toast('Select date & time');return;}
+  const med={
+    id:Date.now().toString(),name,time,
+    cat:document.getElementById('f-cat').value,
+    dosage:document.getElementById('f-dose').value.trim(),
+    food:document.getElementById('f-food').value,
+    freq,priority,
+    notes:document.getElementById('f-notes').value.trim(),
+    taken:false,takenAt:null,createdAt:new Date().toISOString()
+  };
+  await apiPost(med);
+  meds.unshift(med);
+  dbSave();
+  ['f-name','f-time','f-dose','f-notes'].forEach(id=>document.getElementById(id).value='');
+  render();updateStats();toast('Medication scheduled ✓');
+}
+
+async function delMed(i){
+  await apiDelete(meds[i].id);
+  meds.splice(i,1);
+  dbSave();render();updateStats();toast('Reminder removed');
+}
+
+async function markTaken(i){
+  meds[i].taken=true;
+  meds[i].takenAt=new Date().toISOString();
+  dbSave();render();updateStats();toast('Marked as taken ✓');
+}
+
+function logout(){
+  localStorage.removeItem("loggedIn");
+  window.location.href="index.html";
+}
+
+// ✅ Start — load from Azure DB first
+dbLoad();render();updateStats();
+loadFromServer();
+</script>
+</body>
+</html>
