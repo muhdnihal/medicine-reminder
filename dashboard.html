@@ -374,25 +374,31 @@ function render(){
   }).join('');
 }
 
-async function addMed(){
-  const name=document.getElementById('f-name').value.trim();
-  const time=document.getElementById('f-time').value;
-  if(!name){document.getElementById('f-name').focus();toast('Enter medicine name');return;}
-  if(!time){document.getElementById('f-time').focus();toast('Select date & time');return;}
-  const med={
-    id:Date.now().toString(),name,time,
-    cat:document.getElementById('f-cat').value,
-    dosage:document.getElementById('f-dose').value.trim(),
-    food:document.getElementById('f-food').value,
-    freq,priority,
-    notes:document.getElementById('f-notes').value.trim(),
-    taken:false,takenAt:null,createdAt:new Date().toISOString()
+async function addMed() {
+  const data = {
+    name: document.getElementById('f-name').value,
+    time: document.getElementById('f-time').value,
+    category: document.getElementById('f-cat').value,
+    dose: document.getElementById('f-dose').value,
+    food: document.getElementById('f-food').value,
+    notes: document.getElementById('f-notes').value
   };
-  await apiPost(med);
-  meds.unshift(med);
-  dbSave();
-  ['f-name','f-time','f-dose','f-notes'].forEach(id=>document.getElementById(id).value='');
-  render();updateStats();toast('Medication scheduled ✓');
+
+  try {
+    const res = await fetch(ADD_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.text();
+    console.log("Saved:", result);
+    alert("Saved successfully!");
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }
 
 async function delMed(i){
